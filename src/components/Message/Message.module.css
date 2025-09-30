@@ -1,0 +1,17 @@
+.message {
+  padding: 10px;
+  border-radius: 8px;
+  margin: 5px 0;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.message.user {
+  background-color: #d1e7dd;
+  align-self: flex-end;
+}
+
+.message.ai {
+  background-color: #f8d7da;
+  align-self: flex-start;
+}

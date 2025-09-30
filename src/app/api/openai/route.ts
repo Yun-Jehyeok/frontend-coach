@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
         const data = await res.json();
         return NextResponse.json(data);
     } catch (e) {
+        console.error("OpenAI request error:", e);
         return NextResponse.json({ error: "OpenAI request failed." }, { status: 500 });
     }
 }

@@ -322,7 +322,7 @@ ${input}
             ) : (
                 // 설명/예시 단계는 입력창 없음
                 <div className="mt-4 text-gray-400 text-sm">
-                    다음 안내를 읽고 '다음' 버튼을 눌러주세요.
+                    다음 안내를 읽고 &apos;다음&apos; 버튼을 눌러주세요.
                     <button className="ml-2 bg-blue-400 text-white px-3 py-1 rounded" onClick={goNextStep} type="button">
                         다음
                     </button>

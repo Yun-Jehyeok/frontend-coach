@@ -18,8 +18,7 @@
  */
 interface PropsType {
     label?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    value: any;
+    value: string | number | readonly string[];
     name: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     placeholder: string;

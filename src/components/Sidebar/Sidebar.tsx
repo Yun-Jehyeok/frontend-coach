@@ -14,9 +14,9 @@ const navItems = [
 export default function Sidebar() {
     const path = usePathname();
 
-    if (path === "/signin") {
-        return null;
-    }
+    // if (path === "/signin") {
+    //     return null;
+    // }
     return (
         <div className="w-[290px] bg-white">
             <div className="w-full h-[130px] bg-white border-b border-[#F4F7FE] flex items-center justify-center text-[#2B3674] font-poppins font-bold text-[26px] leading-[26px]">

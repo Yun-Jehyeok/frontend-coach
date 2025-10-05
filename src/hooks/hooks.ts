@@ -32,19 +32,16 @@ export const useClickOutside = (ref: RefObject<HTMLElement | null>, handler: (ev
  * @returns value, onChange, reset
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const useInput = (initialValue: any) => {
-    const [value, setValue] = useState(initialValue);
+export const useInput = <T>(initialValue: T) => {
+    const [value, setValue] = useState<T>(initialValue);
     const onChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
         const {
             target: { value },
         } = e;
-
-        setValue(value);
+        setValue(value as T);
     };
-
     const reset = () => setValue(initialValue);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const resetValue = (value: any) => setValue(value);
+    const resetValue = (value: T) => setValue(value);
 
     return { value, onChange, reset, resetValue };
 };

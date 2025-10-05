@@ -104,7 +104,7 @@ const lessonModules: LessonModule[] = [
         ],
     },
     {
-        title: "HTML 완전 기초",
+        title: "HTML",
         steps: [
             {
                 type: "explanation",
@@ -195,11 +195,6 @@ const lessonModules: LessonModule[] = [
                 codeValidation: "<button onclick=\"alert('Hello World!')\">",
                 hint: "button 태그와 onclick 속성을 사용하세요.",
             },
-        ],
-    },
-    {
-        title: "HTML 태그와 속성",
-        steps: [
             {
                 type: "explanation",
                 content: "HTML 태그에는 추가 정보를 담는 '속성'을 사용할 수 있습니다. 예를 들어 <a> 태그의 href 속성은 링크의 주소를 지정합니다.",
@@ -234,11 +229,6 @@ const lessonModules: LessonModule[] = [
                 codeValidation: "<img",
                 hint: "<img src=... 형태로 작성하세요.",
             },
-        ],
-    },
-    {
-        title: "링크와 리스트",
-        steps: [
             {
                 type: "explanation",
                 content: "여러 항목을 나열할 때는 리스트 태그를 사용합니다. <ul>은 순서 없는 리스트, <ol>은 순서 있는 리스트입니다. 각 항목은 <li> 태그로 감쌉니다.",
@@ -262,11 +252,6 @@ const lessonModules: LessonModule[] = [
                 codeValidation: "<ol",
                 hint: "<ol>과 <li>를 함께 사용하세요.",
             },
-        ],
-    },
-    {
-        title: "테이블과 입력 폼",
-        steps: [
             {
                 type: "explanation",
                 content: "표를 만들 때는 <table> 태그를 사용합니다. <tr>은 행(row), <td>는 셀(cell), <th>는 제목 셀입니다.",
@@ -310,11 +295,6 @@ const lessonModules: LessonModule[] = [
                 codeValidation: "<input",
                 hint: '<input type="text">와 <button>을 함께 사용하세요.',
             },
-        ],
-    },
-    {
-        title: "시맨틱 태그와 구조화",
-        steps: [
             {
                 type: "explanation",
                 content: "시맨틱 태그란, 의미를 가진 HTML 태그입니다. 예를 들어 <header>, <nav>, <main>, <footer> 등은 각각 페이지의 머리글, 내비게이션, 본문, 바닥글을 의미합니다.",
@@ -338,11 +318,6 @@ const lessonModules: LessonModule[] = [
                 codeValidation: "<header",
                 hint: "각 태그를 한 번씩 사용해보세요.",
             },
-        ],
-    },
-    {
-        title: "폼 심화와 label, textarea",
-        steps: [
             {
                 type: "explanation",
                 content: "폼에서 label 태그는 input과 연결해 사용자의 접근성을 높여줍니다. for 속성에 input의 id를 지정하면 label을 클릭해도 input이 선택됩니다.",
@@ -372,11 +347,6 @@ const lessonModules: LessonModule[] = [
                 codeValidation: "<textarea",
                 hint: "<form>, <input>, <textarea>, <button>을 함께 사용하세요.",
             },
-        ],
-    },
-    {
-        title: "메타 태그와 문서 정보",
-        steps: [
             {
                 type: "explanation",
                 content: '메타 태그(meta)는 문서의 정보를 담는 태그입니다. <meta charset="UTF-8">은 문자 인코딩을 지정합니다.',
@@ -394,11 +364,6 @@ const lessonModules: LessonModule[] = [
                 answer: "charset",
                 hint: "c로 시작합니다.",
             },
-        ],
-    },
-    {
-        title: "주석과 특수문자",
-        steps: [
             {
                 type: "explanation",
                 content: "HTML에서 주석은 <!-- 와 --> 사이에 작성합니다. 주석은 화면에 표시되지 않습니다.",
@@ -427,11 +392,6 @@ const lessonModules: LessonModule[] = [
                 answer: "&amp;",
                 hint: "&로 시작합니다.",
             },
-        ],
-    },
-    {
-        title: "접근성과 alt, tabindex",
-        steps: [
             {
                 type: "explanation",
                 content: "이미지 태그에는 alt 속성을 꼭 작성해야 합니다. alt는 이미지를 볼 수 없는 사용자에게 대체 설명을 제공합니다.",
@@ -463,7 +423,7 @@ const lessonModules: LessonModule[] = [
         ],
     },
     {
-        title: "CSS 기초",
+        title: "CSS",
         steps: [
             {
                 type: "explanation",
@@ -581,11 +541,6 @@ const lessonModules: LessonModule[] = [
                 codeValidation: "p",
                 hint: "color와 background를 사용하세요.",
             },
-        ],
-    },
-    {
-        title: "CSS 심화 - 레이아웃과 실전",
-        steps: [
             {
                 type: "explanation",
                 content: "flexbox는 요소를 가로/세로로 정렬할 때 매우 유용합니다. display: flex;를 부모에 주고, justify-content, align-items 등으로 정렬합니다.",
@@ -649,7 +604,7 @@ const lessonModules: LessonModule[] = [
         ],
     },
     {
-        title: "JavaScript 기초",
+        title: "JavaScript",
         steps: [
             {
                 type: "explanation",
@@ -745,11 +700,6 @@ const lessonModules: LessonModule[] = [
                 codeValidation: "innerText",
                 hint: "querySelector와 innerText를 사용하세요.",
             },
-        ],
-    },
-    {
-        title: "JavaScript 심화",
-        steps: [
             {
                 type: "explanation",
                 content: "조건문(if)은 특정 조건에 따라 코드를 실행할 때 사용합니다.",

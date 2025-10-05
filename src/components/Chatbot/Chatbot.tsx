@@ -1,6 +1,5 @@
-import type { FormEvent } from "react";
-import React, { useEffect, useRef, useState } from "react";
-import type { LessonStep } from "../../utils/lessonData";
+import React, { useEffect, useRef, useState, type FormEvent } from "react";
+import type { LessonModule, LessonStep } from "../../utils/lessonData";
 import lessonModules from "../../utils/lessonData";
 
 type Message = {
@@ -13,45 +12,126 @@ interface ChatbotProps {
     setCodeInput: (v: string) => void;
 }
 
-const PROGRESS_KEY = "frontend-coach-progress";
+// 분류별 모듈 인덱스 매핑 (lessonModules 배열에 맞게 수정)
+const CATEGORY_MODULES: Record<"Web" | "HTML" | "CSS" | "JavaScript", number[]> = {
+    Web: [0],
+    HTML: [1],
+    CSS: [2],
+    JavaScript: [3],
+};
+
+const INIT_MESSAGE: Message = {
+    role: "assistant",
+    content: "안녕하세요! 프론트엔드 커리큘럼을 따라 학습해볼까요?\n아래 '레슨 시작' 버튼을 눌러주세요.",
+};
+
+const codePrompt = (question: string, codeValidation: string, codeInput: string) => `
+아래는 HTML 학습자의 코드 실습 문제입니다.
+문제: ${question}
+예상 정답 예시(힌트): ${codeValidation}
+학생의 답안:
+${codeInput}
+
+학생의 답안이 문제의 요구사항을 충족하는지, 의미상 정답인지 "정답" 또는 "오답"으로만 답변해 주세요.
+`;
+
+const quizPrompt = (question: string, answer: string, userAnswer: string) => `
+아래는 HTML 학습자의 퀴즈 문제입니다.
+문제: ${question}
+예상 정답 예시(힌트): ${answer}
+학생의 답안:
+${userAnswer}
+
+학생의 답안이 의미상 정답인지 "정답" 또는 "오답"으로만 답변해 주세요.
+`;
 
 const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
-    // 1. 진행 위치 상태
+    // 상태
+    const [selected, setSelected] = useState<"Web" | "HTML" | "CSS" | "JavaScript">("Web");
+    const [open, setOpen] = useState(false);
     const [moduleIdx, setModuleIdx] = useState(0);
     const [stepIdx, setStepIdx] = useState(-1); // -1: 시작 전
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            role: "assistant",
-            content: "안녕하세요! 프론트엔드 커리큘럼을 따라 학습해볼까요?\n아래 '레슨 시작' 버튼을 눌러주세요.",
-        },
-    ]);
+    const [messages, setMessages] = useState<Message[]>([INIT_MESSAGE]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [codeError, setCodeError] = useState<string | null>(null);
+
+    // ref
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const nextBtnRef = useRef<HTMLButtonElement>(null);
 
-    const currentModule = lessonModules[moduleIdx];
+    // 옵션
+    const options = ["Web", "HTML", "CSS", "JavaScript"];
+    const filteredModules: LessonModule[] = CATEGORY_MODULES[selected].map((idx) => lessonModules[idx]);
+    const currentModule = filteredModules[moduleIdx];
     const currentStep: LessonStep | undefined = stepIdx >= 0 ? currentModule?.steps[stepIdx] : undefined;
+    const getProgressKey = (category: typeof selected) => `frontend-coach-progress-${category}`;
 
-    // 2. 마운트 시 localStorage에서 진행 위치 불러오기
     useEffect(() => {
-        const saved = localStorage.getItem(PROGRESS_KEY);
+        let moduleIndex = 0;
+        let stepIndex = -1;
+
+        const saved = localStorage.getItem(getProgressKey(selected));
+
         if (saved) {
-            try {
-                const { moduleIdx: m, stepIdx: s } = JSON.parse(saved);
-                if (typeof m === "number" && typeof s === "number" && lessonModules[m] && lessonModules[m].steps[s]) {
-                    setModuleIdx(m);
-                    setStepIdx(s);
-                }
-            } catch {
-                // 저장값이 잘못된 경우 무시
+            const { moduleIdx: m, stepIdx: s } = JSON.parse(saved);
+            if (typeof m === "number" && typeof s === "number" && filteredModules[m] && filteredModules[m].steps[s]) {
+                moduleIndex = m;
+                stepIndex = s;
             }
         }
+
+        setModuleIdx(moduleIndex);
+        setStepIdx(stepIndex);
+
+        setMessages([INIT_MESSAGE]);
+        setInput("");
+        setCodeError(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // stepIdx가 0 이상일 때만 showStep 호출
+    useEffect(() => {
+        if (stepIdx >= 0 && currentModule?.steps[stepIdx]) {
+            showStep(stepIdx);
+        }
+
+        if (stepIdx < 0) {
+            setMessages([INIT_MESSAGE]);
+            setInput("");
+            setCodeError(null);
+
+            return;
+        }
+        localStorage.setItem(getProgressKey(selected), JSON.stringify({ moduleIdx, stepIdx }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [moduleIdx, stepIdx, selected]);
+
+    // 채팅 스크롤 항상 아래로
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    // 설명/예시 단계에서 다음 버튼 자동 포커스
+    useEffect(() => {
+        if (stepIdx >= 0 && currentModule && currentStep && (currentStep.type === "explanation" || currentStep.type === "example") && nextBtnRef.current) {
+            nextBtnRef.current.focus();
+        }
+    }, [stepIdx, currentModule, currentStep]);
+
+    // 단계별 안내
+    const showStep = (idx: number) => {
+        const step = currentModule.steps[idx];
+        if (!step) return;
+        setMessages((prev) => [
+            ...prev,
+            {
+                role: "assistant",
+                content: step.type === "quiz" || step.type === "code" ? step.question : step.content,
+            },
+        ]);
+        setInput("");
+    };
 
     // 레슨 시작
     const startLesson = () => {
@@ -63,64 +143,68 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
                 content: `📚 [${currentModule.title}] 레슨을 시작합니다!`,
             },
         ]);
-        setTimeout(() => {
-            showStep(0);
-        }, 500);
     };
 
-    // 단계별 안내
-    const showStep = (idx: number) => {
-        const step = currentModule.steps[idx];
-        if (!step) return;
-        setMessages((prev) => [...prev, { role: "assistant", content: step.type === "quiz" || step.type === "code" ? step.question : step.content }]);
-        setInput("");
-    };
+    // 분류 변경
+    const onChangeSelected = (selectedParams: typeof selected) => {
+        setSelected(selectedParams);
+        setOpen(false);
 
-    useEffect(() => {
-        if (stepIdx >= 0 && currentModule?.steps[stepIdx]) {
-            showStep(stepIdx);
+        let moduleIndex = 0;
+        let stepIndex = -1;
+
+        const saved = localStorage.getItem(getProgressKey(selectedParams));
+
+        if (saved) {
+            const { moduleIdx: m, stepIdx: s } = JSON.parse(saved);
+            if (typeof m === "number" && typeof s === "number" && filteredModules[m] && filteredModules[m].steps[s]) {
+                moduleIndex = m;
+                stepIndex = s;
+            }
         }
-    }, [moduleIdx, stepIdx]);
+
+        setModuleIdx(moduleIndex);
+        setStepIdx(stepIndex);
+
+        setMessages([INIT_MESSAGE]);
+        setInput("");
+        setCodeError(null);
+    };
 
     // 다음 단계로 이동
     const goNextStep = () => {
-        setStepIdx((prev) => {
-            const next = prev + 1;
-            // 다음 모듈로 넘어가는 경우 처리
-            if (currentModule && next >= currentModule.steps.length) {
-                if (moduleIdx + 1 < lessonModules.length) {
-                    setModuleIdx((m) => {
-                        localStorage.setItem(PROGRESS_KEY, JSON.stringify({ moduleIdx: m + 1, stepIdx: 0 }));
-                        return m + 1;
-                    });
-                    return 0;
-                } else {
-                    // 마지막 모듈 마지막 스텝
-                    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ moduleIdx, stepIdx: next - 1 }));
-                    return prev;
-                }
-            } else {
-                localStorage.setItem(PROGRESS_KEY, JSON.stringify({ moduleIdx, stepIdx: next }));
-                return next;
+        if (!currentModule) return;
+        const nextStep = stepIdx + 1;
+        if (nextStep >= currentModule.steps.length) {
+            if (moduleIdx + 1 < filteredModules.length) {
+                setModuleIdx((m) => m + 1);
+                setStepIdx(0);
+                localStorage.setItem(getProgressKey(selected), JSON.stringify({ moduleIdx: moduleIdx + 1, stepIdx: 0 }));
             }
-        });
+        } else {
+            setStepIdx(nextStep);
+            localStorage.setItem(getProgressKey(selected), JSON.stringify({ moduleIdx, stepIdx: nextStep }));
+        }
     };
 
-    // 4. "레슨 처음부터" 버튼 등으로 진행 위치 초기화
+    // "레슨 처음부터" 버튼
     const resetProgress = () => {
         setModuleIdx(0);
         setStepIdx(0);
-        localStorage.setItem(PROGRESS_KEY, JSON.stringify({ moduleIdx: 0, stepIdx: 0 }));
+        localStorage.setItem(getProgressKey(selected), JSON.stringify({ moduleIdx: 0, stepIdx: 0 }));
+        setMessages([INIT_MESSAGE]);
+        setInput("");
+        setCodeError(null);
     };
 
-    // 코드 실습 정답 체크 (OpenAI 활용)
+    // 코드 실습 정답 체크
     const handleCodeCheck = async () => {
         if (!currentStep || currentStep.type !== "code") return;
         if (!codeInput.trim()) {
             setCodeError("코드를 입력해 주세요.");
             return;
         }
-        // 1차: 키워드 포함 체크 (간단한 정답)
+
         const userCode = codeInput.replace(/\s/g, "").toLowerCase();
         const answerCode = currentStep.codeValidation.replace(/\s/g, "").toLowerCase();
         const isRoughlyCorrect = userCode.includes(answerCode);
@@ -132,23 +216,14 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
             return;
         }
 
-        // 2차: OpenAI에게 의미 평가 요청 (서버 프록시)
         setCodeError("AI가 답변을 평가 중입니다...");
-        try {
-            const prompt = `
-아래는 HTML 학습자의 코드 실습 문제입니다.
-문제: ${currentStep.question}
-예상 정답 예시(힌트): ${currentStep.codeValidation}
-학생의 답안:
-${codeInput}
 
-학생의 답안이 문제의 요구사항을 충족하는지, 의미상 정답인지 "정답" 또는 "오답"으로만 답변해 주세요.
-`;
+        try {
+            const prompt = codePrompt(currentStep.question, currentStep.codeValidation, codeInput);
+
             const res = await fetch("/api/openai", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
                     messages: [
@@ -159,8 +234,10 @@ ${codeInput}
                     temperature: 0,
                 }),
             });
+
             const data = await res.json();
             const aiResult = data.choices?.[0]?.message?.content?.trim() || "";
+
             if (aiResult.includes("정답")) {
                 setCodeError(null);
                 setMessages((prev) => [...prev, { role: "assistant", content: "정답입니다! 🎉" }]);
@@ -173,12 +250,14 @@ ${codeInput}
         }
     };
 
-    // 퀴즈 정답 체크 (OpenAI 활용)
+    // 퀴즈 정답 체크
     const handleQuiz = async (e: FormEvent) => {
         e.preventDefault();
+
         if (!currentStep || currentStep.type !== "quiz") return;
+
         setMessages((prev) => [...prev, { role: "user", content: input }]);
-        // 1차: 키워드 포함 체크
+
         const isRoughlyCorrect = input.trim().toLowerCase().includes(currentStep.answer.toLowerCase());
         if (isRoughlyCorrect) {
             setMessages((prev) => [...prev, { role: "assistant", content: "정답입니다! 🎉" }]);
@@ -186,23 +265,15 @@ ${codeInput}
             setTimeout(goNextStep, 1200);
             return;
         }
-        // 2차: OpenAI 평가 (서버 프록시)
-        setMessages((prev) => [...prev, { role: "assistant", content: "AI가 답변을 평가 중입니다..." }]);
-        try {
-            const prompt = `
-아래는 HTML 학습자의 퀴즈 문제입니다.
-문제: ${currentStep.question}
-예상 정답 예시(힌트): ${currentStep.answer}
-학생의 답안:
-${input}
 
-학생의 답안이 의미상 정답인지 "정답" 또는 "오답"으로만 답변해 주세요.
-`;
+        setMessages((prev) => [...prev, { role: "assistant", content: "AI가 답변을 평가 중입니다..." }]);
+
+        try {
+            const prompt = quizPrompt(currentStep.question, currentStep.answer, input);
+
             const res = await fetch("/api/openai", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
                     messages: [
@@ -213,8 +284,10 @@ ${input}
                     temperature: 0,
                 }),
             });
+
             const data = await res.json();
             const aiResult = data.choices?.[0]?.message?.content?.trim() || "";
+
             if (aiResult.includes("정답")) {
                 setMessages((prev) => [...prev, { role: "assistant", content: "정답입니다! 🎉" }]);
                 setInput("");
@@ -229,18 +302,19 @@ ${input}
         }
     };
 
-    // 일반 챗봇 질문 (학습 흐름 외)
+    // 일반 챗봇 질문
     const handleChat = async (e: FormEvent) => {
         e.preventDefault();
+
         if (!input.trim()) return;
+
         setMessages((prev) => [...prev, { role: "user", content: input }]);
         setLoading(true);
+
         try {
             const res = await fetch("/api/openai", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
                     messages: [{ role: "system", content: "당신은 프론트엔드 입문자를 위한 친절한 튜터입니다." }, ...messages, { role: "user", content: input }],
@@ -248,94 +322,141 @@ ${input}
                     temperature: 0.7,
                 }),
             });
+
             const data = await res.json();
             const aiContent = data.choices?.[0]?.message?.content || "AI 응답을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
             setMessages((prev) => [...prev, { role: "assistant", content: aiContent }]);
         } catch {
-            setMessages((prev) => [
-                ...prev,
-                {
-                    role: "assistant",
-                    content: "AI 응답 중 오류가 발생했습니다.",
-                },
-            ]);
+            setMessages((prev) => [...prev, { role: "assistant", content: "AI 응답 중 오류가 발생했습니다." }]);
         } finally {
             setLoading(false);
             setInput("");
         }
     };
 
+    // UI
     return (
-        <section className="w-full p-6 flex flex-col bg-white shadow-md rounded-lg m-4 max-h-[calc(100vh-96px)] overflow-y-auto">
-            <div className="flex-1 overflow-y-auto pr-2">
-                {messages.map((msg, idx) => (
-                    <div key={idx} className={`mb-3 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                        {msg.role === "assistant" && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center mr-2 text-lg">🤖</div>}
-                        <div
-                            className={`max-w-[80%] px-4 py-2 rounded-2xl shadow text-base whitespace-pre-line ${
-                                msg.role === "user" ? "bg-blue-500 text-white rounded-br-none" : "bg-blue-100 text-blue-900 rounded-bl-none"
-                            }`}
-                        >
-                            {msg.content}
-                        </div>
-                    </div>
-                ))}
-                <div ref={chatEndRef} />
+        <section className="w-full h-full flex flex-col bg-white rounded-[20px] overflow-y-auto">
+            <div className="py-5 px-8 w-full flex justify-between items-center">
+                <h2 className="font-bold text-2xl text-[#2B3674]">{selected}</h2>
+                <div className="relative w-[140px]">
+                    <button
+                        type="button"
+                        className="w-full p-2 pl-4 rounded-lg border border-[#F4F7FE] bg-[#F4F7FE] text-[#2B3674] text-sm font-semibold shadow-sm flex items-center justify-between focus:outline-none transition cursor-pointer"
+                        onClick={() => setOpen((v) => !v)}
+                    >
+                        {selected}
+                        <span className={`ml-2 pointer-events-none text-[#A3AED0] ${open ? "transform -rotate-180" : ""} transition-all duration-150`}>
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                                <path d="M7 10l5 5 5-5" stroke="#A3AED0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </span>
+                    </button>
+                    {open && (
+                        <ul className="absolute left-0 top-[120%] w-full bg-white border border-[#F4F7FE] rounded-lg shadow-lg z-10">
+                            {options.map((opt) => (
+                                <li
+                                    key={opt}
+                                    className={`px-4 py-2 cursor-pointer text-sm hover:bg-[#F4F7FE] transition ${selected === opt ? "bg-[#F4F7FE] text-[#4318FF] font-bold" : "text-[#2B3674]"}`}
+                                    onClick={() => onChangeSelected(opt as typeof selected)}
+                                >
+                                    {opt}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </div>
-            {/* 단계별 입력 UI */}
-            {stepIdx === -1 ? (
-                // 레슨 시작 전 or 모듈 종료
-                <form className="mt-4 flex" onSubmit={handleChat}>
-                    <input
-                        className="flex-1 border rounded-l-lg px-3 py-2 focus:outline-none"
-                        placeholder="질문을 입력하세요..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        disabled={loading}
-                        autoFocus
-                    />
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-r-lg" disabled={loading || !input.trim()} type="submit">
-                        {loading ? "전송 중..." : "전송"}
-                    </button>
-                </form>
-            ) : currentStep?.type === "quiz" ? (
-                <form className="mt-4 flex" onSubmit={handleQuiz}>
-                    <input
-                        className="flex-1 border rounded-l-lg px-3 py-2 focus:outline-none"
-                        placeholder="정답을 입력하세요..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        disabled={loading}
-                        autoFocus
-                    />
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-r-lg" disabled={loading || !input.trim()} type="submit">
-                        {loading ? "전송 중..." : "전송"}
-                    </button>
-                </form>
-            ) : currentStep?.type === "code" ? (
-                <div className="mt-4 flex flex-col gap-2">
-                    <button className="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition" onClick={handleCodeCheck} type="button">
-                        정답 확인
-                    </button>
-                    {codeError && <div className="text-red-600 text-sm">{codeError}</div>}
+
+            <div className="flex-1 px-8 flex flex-col py-5">
+                <div className="flex-1 max-h-[calc(100vh-420px)] overflow-y-auto pr-2">
+                    {messages.map((msg, idx) => (
+                        <div key={idx} className={`mb-4 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                            {msg.role === "assistant" && <div className="flex-shrink-0 w-9 h-9 rounded-full bg-[#E9E3FF] flex items-center justify-center mr-3 text-xl shadow">🤖</div>}
+                            <div
+                                className={`max-w-[75%] px-5 py-3 rounded-2xl text-base whitespace-pre-line break-words font-dmsans transition-all
+                                    ${msg.role === "user" ? "bg-[#4318FF] text-white rounded-br-md" : "bg-[#F4F7FE] text-[#2B3674] rounded-bl-md border border-[#E9E3FF]"}`}
+                            >
+                                {msg.content}
+                            </div>
+                        </div>
+                    ))}
+                    <div ref={chatEndRef} />
                 </div>
-            ) : (
-                // 설명/예시 단계는 입력창 없음
-                <div className="mt-4 text-gray-400 text-sm">
-                    다음 안내를 읽고 &apos;다음&apos; 버튼을 눌러주세요.
-                    <button className="ml-2 bg-blue-400 text-white px-3 py-1 rounded" onClick={goNextStep} type="button">
-                        다음
+                {/* 단계별 입력 UI */}
+                {stepIdx === -1 ? (
+                    <form className="mt-6 flex gap-2" onSubmit={handleChat}>
+                        <input
+                            className="flex-1 border border-[#F4F7FE] rounded-lg px-4 py-3 bg-[#F4F7FE] text-[#2B3674] font-dmsans focus:outline-none focus:ring-2 focus:ring-[#4318FF] transition"
+                            placeholder="질문을 입력하세요..."
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            disabled={loading}
+                            autoFocus
+                        />
+                        <button
+                            className="bg-[#4318FF] hover:bg-[#7551FF] text-white px-6 py-3 rounded-lg font-bold shadow transition disabled:bg-[#A3AED0]"
+                            disabled={loading || !input.trim()}
+                            type="submit"
+                        >
+                            {loading ? "전송 중..." : "전송"}
+                        </button>
+                    </form>
+                ) : currentModule && stepIdx === currentModule.steps.length - 1 ? (
+                    <div className="mt-6 text-[#A3AED0] text-base flex items-center gap-2 font-bold justify-center">🎉 학습이 종료되었습니다.</div>
+                ) : currentStep?.type === "quiz" ? (
+                    <form className="mt-6 flex gap-2" onSubmit={handleQuiz}>
+                        <input
+                            className="flex-1 border border-[#F4F7FE] rounded-lg px-4 py-3 bg-[#F4F7FE] text-[#2B3674] font-dmsans focus:outline-none focus:ring-2 focus:ring-[#4318FF] transition"
+                            placeholder="정답을 입력하세요..."
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            disabled={loading}
+                            autoFocus
+                        />
+                        <button
+                            className="bg-[#4318FF] hover:bg-[#4318FF]/90 text-white px-6 py-3 rounded-lg font-bold shadow transition disabled:bg-[#A3AED0]"
+                            disabled={loading || !input.trim()}
+                            type="submit"
+                        >
+                            {loading ? "전송 중..." : "전송"}
+                        </button>
+                    </form>
+                ) : currentStep?.type === "code" ? (
+                    <div className="mt-6 flex flex-col gap-2">
+                        <button className="bg-[#01B574] hover:bg-[#01B574]/90 h-12 text-white rounded-lg font-semibold shadow transition text-sm" onClick={handleCodeCheck} type="button">
+                            정답 확인
+                        </button>
+                        {codeError && <div className="text-[#E31A1A] text-sm font-medium">{codeError}</div>}
+                    </div>
+                ) : (
+                    <div
+                        className="mt-6 text-[#A3AED0] text-base flex items-center gap-2"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") goNextStep();
+                        }}
+                    >
+                        다음 안내를 읽고 <span className="font-bold text-[#4318FF]">‘다음’</span> 버튼을 눌러주세요.
+                        <button
+                            ref={nextBtnRef}
+                            className="ml-2 bg-[#4318FF] hover:bg-[#4318FF]/90 text-white px-5 py-2 rounded-lg font-bold shadow transition focus:outline-none"
+                            onClick={goNextStep}
+                            type="button"
+                        >
+                            다음
+                        </button>
+                    </div>
+                )}
+                {stepIdx === -1 && (
+                    <button className="mt-6 bg-[#00B074] hover:bg-[#13DEB9] text-white px-6 py-3 rounded-lg font-bold shadow transition" onClick={startLesson} disabled={stepIdx !== -1}>
+                        레슨 시작
                     </button>
-                </div>
-            )}
-            {stepIdx === -1 && (
-                <button className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition" onClick={startLesson} disabled={stepIdx !== -1}>
-                    레슨 시작
+                )}
+                <button className="w-full mt-3 bg-[#4318FF] text-[#F4F7FE] px-4 py-2 rounded-lg font-semibold hover:bg-[#4318ff]/90 transition text-sm h-12" onClick={resetProgress}>
+                    레슨 처음부터
                 </button>
-            )}
-            <button className="w-full mt-2 bg-gray-200 text-blue-700 px-4 py-2 rounded-lg shadow hover:bg-gray-300 transition text-sm" onClick={resetProgress}>
-                레슨 처음부터
-            </button>
+            </div>
         </section>
     );
 };

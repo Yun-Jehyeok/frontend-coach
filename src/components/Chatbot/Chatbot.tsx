@@ -68,21 +68,21 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
     const getProgressKey = (category: typeof selected) => `frontend-coach-progress-${category}`;
 
     useEffect(() => {
-        let module = 0;
-        let step = -1;
+        let moduleIndex = 0;
+        let stepIndex = -1;
 
         const saved = localStorage.getItem(getProgressKey(selected));
 
         if (saved) {
             const { moduleIdx: m, stepIdx: s } = JSON.parse(saved);
             if (typeof m === "number" && typeof s === "number" && filteredModules[m] && filteredModules[m].steps[s]) {
-                module = m;
-                step = s;
+                moduleIndex = m;
+                stepIndex = s;
             }
         }
 
-        setModuleIdx(module);
-        setStepIdx(step);
+        setModuleIdx(moduleIndex);
+        setStepIdx(stepIndex);
 
         setMessages([INIT_MESSAGE]);
         setInput("");
@@ -150,21 +150,21 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
         setSelected(selectedParams);
         setOpen(false);
 
-        let module = 0;
-        let step = -1;
+        let moduleIndex = 0;
+        let stepIndex = -1;
 
         const saved = localStorage.getItem(getProgressKey(selectedParams));
 
         if (saved) {
             const { moduleIdx: m, stepIdx: s } = JSON.parse(saved);
             if (typeof m === "number" && typeof s === "number" && filteredModules[m] && filteredModules[m].steps[s]) {
-                module = m;
-                step = s;
+                moduleIndex = m;
+                stepIndex = s;
             }
         }
 
-        setModuleIdx(module);
-        setStepIdx(step);
+        setModuleIdx(moduleIndex);
+        setStepIdx(stepIndex);
 
         setMessages([INIT_MESSAGE]);
         setInput("");

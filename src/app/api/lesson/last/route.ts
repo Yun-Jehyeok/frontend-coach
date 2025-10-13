@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
 
         const lessons = result.rows as Lesson[];
 
+        // fix error
         const filteredLessons = {
             web: {} as LessonStep,
             html: {} as LessonStep,

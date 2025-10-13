@@ -1,9 +1,9 @@
+import { authOptions } from "@/lib/api";
 import { sql } from "@vercel/postgres";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
 
-export async function PUT(req: NextRequest, res: NextResponse) {
+export async function PUT(req: NextRequest) {
     try {
         // next-auth 세션에서 현재 로그인된 사용자 정보 가져오기
         const session = await getServerSession(authOptions);

@@ -1,11 +1,11 @@
 "use client";
 
-interface Err {
-    email: string;
-    password: string;
-    nickname: string;
-    passwordCheck: string;
-}
+// interface Err {
+//     email: string;
+//     password: string;
+//     nickname: string;
+//     passwordCheck: string;
+// }
 
 export default function Signup() {
     return "현재 지원하지 않습니다.";

@@ -105,6 +105,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
         if (user !== null && lessonModules.length > 0) {
             setIsLoaded(true);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lessonModules, user]);
 
     // 진행 상태는 user state 기반으로 관리

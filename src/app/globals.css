@@ -131,3 +131,19 @@ table {
     border-collapse: collapse;
     border-spacing: 0;
 }
+
+/* 자동완성 배경색 제어 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: inherit !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Firefox용 자동완성 스타일 */
+input:-moz-autofill {
+    background-color: white !important;
+    color: inherit !important;
+}

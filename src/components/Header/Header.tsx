@@ -6,11 +6,11 @@ export default function Header({ page }: { page: string }) {
                 <div className="text-[#2B3674] font-bold text-[34px] leading-[42px]">{page}</div>
             </h1>
 
-            <div className="shadow-dropshadow h-[60px] w-fit rounded-[30px] p-2.5 bg-white flex gap-5 items-center">
+            {/* <div className="shadow-dropshadow h-[60px] w-fit rounded-[30px] p-2.5 bg-white flex gap-5 items-center">
                 <SearchBox />
                 <Notification />
                 <Profile />
-            </div>
+            </div> */}
         </div>
     );
 }

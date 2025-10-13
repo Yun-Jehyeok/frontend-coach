@@ -64,7 +64,7 @@ export default function Input({
                 </div>
             )}
 
-            <div className="w-full h-[50px] flex rounded-2xl px-6 border border-[#E0E5F2]">
+            <div className={`w-full h-[50px] flex rounded-2xl px-6 border border-[#E0E5F2] ${isErr && "border-red-500"}`}>
                 <input
                     className="flex-1 h-full border-none text-sm outline-none"
                     type={type}

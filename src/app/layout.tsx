@@ -1,4 +1,5 @@
-import Sidebar from "@/components/Sidebar/Sidebar";
+import SidebarProvider from "@/components/Sidebar/SidebarProvider";
+import SessionWrapper from "@/components/Wrappers/SessionWrapper";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { DM_Sans, Poppins } from "next/font/google";
@@ -21,10 +22,12 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${dmSans.variable} ${poppins.variable} min-w-[1200px] flex bg-[#F4F7FE] font-dmsans`}>
-                <Sidebar />
-                <div className="flex-1">{children}</div>
+                <SessionWrapper>
+                    <SidebarProvider />
+                    <div className="flex-1">{children}</div>
 
-                <Analytics />
+                    <Analytics />
+                </SessionWrapper>
             </body>
         </html>
     );

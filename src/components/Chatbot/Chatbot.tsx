@@ -1,6 +1,8 @@
+import { getAllLessons as getAlllessonsApi } from "@/apis/lesson";
+import { getUser, updateUserLessons } from "@/apis/user";
+import { Lesson, LessonStep, User } from "@/types";
 import React, { useEffect, useRef, useState, type FormEvent } from "react";
-import type { LessonModule, LessonStep } from "../../utils/lessonData";
-import lessonModules from "../../utils/lessonData";
+import Spinner from "../Spinner";
 
 type Message = {
     role: "assistant" | "user";
@@ -13,11 +15,11 @@ interface ChatbotProps {
 }
 
 // 분류별 모듈 인덱스 매핑 (lessonModules 배열에 맞게 수정)
-const CATEGORY_MODULES: Record<"Web" | "HTML" | "CSS" | "JavaScript", number[]> = {
+const CATEGORY_MODULES: Record<"Web" | "HTML" | "CSS" | "JS", number[]> = {
     Web: [0],
     HTML: [1],
     CSS: [2],
-    JavaScript: [3],
+    JS: [3],
 };
 
 const INIT_MESSAGE: Message = {
@@ -46,8 +48,23 @@ ${userAnswer}
 `;
 
 const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
+    const [lessonModules, setLessonModules] = useState<Lesson[]>([]);
+    const [user, setUser] = useState<User | null>(null);
+
+    // 최초 렌더링 시점에만 user 정보 1회 fetch
+    useEffect(() => {
+        const fetchUser = async () => {
+            const userData = await getUser();
+            if (userData) setUser(userData);
+        };
+        fetchUser();
+        getAllLessons();
+    }, []);
+
+    const [isLoaded, setIsLoaded] = useState(false);
+
     // 상태
-    const [selected, setSelected] = useState<"Web" | "HTML" | "CSS" | "JavaScript">("Web");
+    const [selected, setSelected] = useState<"Web" | "HTML" | "CSS" | "JS">("Web");
     const [open, setOpen] = useState(false);
     const [moduleIdx, setModuleIdx] = useState(0);
     const [stepIdx, setStepIdx] = useState(-1); // -1: 시작 전
@@ -61,36 +78,49 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
     const nextBtnRef = useRef<HTMLButtonElement>(null);
 
     // 옵션
-    const options = ["Web", "HTML", "CSS", "JavaScript"];
-    const filteredModules: LessonModule[] = CATEGORY_MODULES[selected].map((idx) => lessonModules[idx]);
+    const options = ["Web", "HTML", "CSS", "JS"];
+    const filteredModules: Lesson[] = isLoaded ? CATEGORY_MODULES[selected].map((idx) => lessonModules[idx]).filter(Boolean) : [];
     const currentModule = filteredModules[moduleIdx];
     const currentStep: LessonStep | undefined = stepIdx >= 0 ? currentModule?.steps[stepIdx] : undefined;
-    const getProgressKey = (category: typeof selected) => `frontend-coach-progress-${category}`;
+
+    // DB에서 레슨 데이터 불러오기
+    const getAllLessons = async () => {
+        const res = await getAlllessonsApi();
+        setLessonModules(res);
+    };
+    const getUserInfo = async () => {
+        const user = await getUser();
+        if (!user) return;
+
+        setUser(user);
+    };
+    useEffect(() => {
+        getAllLessons();
+        getUserInfo();
+    }, []);
 
     useEffect(() => {
-        let moduleIndex = 0;
-        let stepIndex = -1;
+        if (isLoaded) return;
 
-        const saved = localStorage.getItem(getProgressKey(selected));
-
-        if (saved) {
-            const { moduleIdx: m, stepIdx: s } = JSON.parse(saved);
-            if (typeof m === "number" && typeof s === "number" && filteredModules[m] && filteredModules[m].steps[s]) {
-                moduleIndex = m;
-                stepIndex = s;
-            }
+        if (user !== null && lessonModules.length > 0) {
+            setIsLoaded(true);
         }
+    }, [lessonModules, user]);
 
-        setModuleIdx(moduleIndex);
-        setStepIdx(stepIndex);
+    // 진행 상태는 user state 기반으로 관리
+    useEffect(() => {
+        if (!isLoaded || filteredModules.length === 0 || !user) return;
 
-        setMessages([INIT_MESSAGE]);
+        // moduleIdx는 항상 0, stepIdx는 user.last_lesson_idxs[selected] 값 사용
+        const userStepIdx = user.last_lesson_idxs?.[selected.toLowerCase() as "web" | "html" | "css" | "js"] ?? -1;
+        setModuleIdx(0);
+        setStepIdx(userStepIdx);
+
         setInput("");
         setCodeError(null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isLoaded, selected, user]);
 
-    // stepIdx가 0 이상일 때만 showStep 호출
     useEffect(() => {
         if (stepIdx >= 0 && currentModule?.steps[stepIdx]) {
             showStep(stepIdx);
@@ -103,7 +133,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
 
             return;
         }
-        localStorage.setItem(getProgressKey(selected), JSON.stringify({ moduleIdx, stepIdx }));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [moduleIdx, stepIdx, selected]);
 
@@ -123,6 +152,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
     const showStep = (idx: number) => {
         const step = currentModule.steps[idx];
         if (!step) return;
+
         setMessages((prev) => [
             ...prev,
             {
@@ -130,6 +160,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
                 content: step.type === "quiz" || step.type === "code" ? step.question : step.content,
             },
         ]);
+
         setInput("");
     };
 
@@ -150,51 +181,87 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
         setSelected(selectedParams);
         setOpen(false);
 
-        let moduleIndex = 0;
-        let stepIndex = -1;
-
-        const saved = localStorage.getItem(getProgressKey(selectedParams));
-
-        if (saved) {
-            const { moduleIdx: m, stepIdx: s } = JSON.parse(saved);
-            if (typeof m === "number" && typeof s === "number" && filteredModules[m] && filteredModules[m].steps[s]) {
-                moduleIndex = m;
-                stepIndex = s;
-            }
-        }
-
-        setModuleIdx(moduleIndex);
-        setStepIdx(stepIndex);
+        // moduleIdx는 항상 0, stepIdx는 user.last_lesson_idxs[selectedParams] 값 사용
+        const userStepIdx = user?.last_lesson_idxs?.[selectedParams.toLowerCase() as "web" | "html" | "css" | "js"] ?? -1;
+        setModuleIdx(0);
+        setStepIdx(userStepIdx);
 
         setMessages([INIT_MESSAGE]);
         setInput("");
         setCodeError(null);
     };
 
-    // 다음 단계로 이동
+    // updateUserLessons는 비동기처리 없이 user state만 직접 업데이트
     const goNextStep = () => {
-        if (!currentModule) return;
+        if (!currentModule || !user) return;
         const nextStep = stepIdx + 1;
-        if (nextStep >= currentModule.steps.length) {
-            if (moduleIdx + 1 < filteredModules.length) {
-                setModuleIdx((m) => m + 1);
-                setStepIdx(0);
-                localStorage.setItem(getProgressKey(selected), JSON.stringify({ moduleIdx: moduleIdx + 1, stepIdx: 0 }));
-            }
-        } else {
-            setStepIdx(nextStep);
-            localStorage.setItem(getProgressKey(selected), JSON.stringify({ moduleIdx, stepIdx: nextStep }));
+
+        updateUserLessons({ module_key: currentModule.module_key, stepIdx: nextStep, score: 10 });
+
+        // lesson 정보 생성
+        const lesson = {
+            module_key: currentModule.module_key,
+            stepIdx: nextStep,
+            score: 10,
+        };
+
+        // #file:route.ts의 로직을 그대로 사용해서 user 정보 업데이트
+        // 1. last_lesson_idxs 업데이트
+        const updatedLastLessonIdxs = { ...user.last_lesson_idxs, [lesson.module_key]: lesson.stepIdx };
+
+        // 2. today_lessons 업데이트 (중복 제거)
+        const todayLessonsArr = Array.isArray(user.today_lessons[lesson.module_key]) ? user.today_lessons[lesson.module_key] : [];
+        let updatedTodayLessonsArr = [...todayLessonsArr];
+        if (lesson.stepIdx >= 0) {
+            updatedTodayLessonsArr = Array.from(new Set([...todayLessonsArr, lesson.stepIdx]));
         }
+        const updatedTodayLessons = { ...user.today_lessons, [lesson.module_key]: updatedTodayLessonsArr };
+
+        // user state 직접 업데이트
+        setUser({
+            ...user,
+            last_lesson_idxs: updatedLastLessonIdxs,
+            today_lessons: updatedTodayLessons,
+        });
+
+        setStepIdx(nextStep);
     };
 
     // "레슨 처음부터" 버튼
     const resetProgress = () => {
         setModuleIdx(0);
         setStepIdx(0);
-        localStorage.setItem(getProgressKey(selected), JSON.stringify({ moduleIdx: 0, stepIdx: 0 }));
+
         setMessages([INIT_MESSAGE]);
         setInput("");
         setCodeError(null);
+
+        if (!currentModule || !user) return;
+
+        updateUserLessons({ module_key: currentModule.module_key, stepIdx: -1, score: 0 });
+
+        // lesson 정보 생성
+        const lesson = {
+            module_key: currentModule.module_key,
+            stepIdx: -1,
+            score: 0,
+        };
+
+        // #file:route.ts의 로직을 그대로 사용해서 user 정보 업데이트
+        const updatedLastLessonIdxs = { ...user.last_lesson_idxs, [lesson.module_key]: lesson.stepIdx };
+        const todayLessonsArr = Array.isArray(user.today_lessons[lesson.module_key]) ? user.today_lessons[lesson.module_key] : [];
+        let updatedTodayLessonsArr = [...todayLessonsArr];
+        if (lesson.stepIdx >= 0) {
+            updatedTodayLessonsArr = Array.from(new Set([...todayLessonsArr, lesson.stepIdx]));
+        }
+        const updatedTodayLessons = { ...user.today_lessons, [lesson.module_key]: updatedTodayLessonsArr };
+
+        // 티어는 score가 0이므로 변화 없음
+        setUser({
+            ...user,
+            last_lesson_idxs: updatedLastLessonIdxs,
+            today_lessons: updatedTodayLessons,
+        });
     };
 
     // 코드 실습 정답 체크
@@ -369,20 +436,25 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
             </div>
 
             <div className="flex-1 px-8 flex flex-col py-5">
-                <div className="flex-1 max-h-[calc(100vh-420px)] overflow-y-auto pr-2">
-                    {messages.map((msg, idx) => (
-                        <div key={idx} className={`mb-4 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                            {msg.role === "assistant" && <div className="flex-shrink-0 w-9 h-9 rounded-full bg-[#E9E3FF] flex items-center justify-center mr-3 text-xl shadow">🤖</div>}
-                            <div
-                                className={`max-w-[75%] px-5 py-3 rounded-2xl text-base whitespace-pre-line break-words font-dmsans transition-all
+                {!isLoaded ? (
+                    <Spinner />
+                ) : (
+                    <div className="flex-1 max-h-[calc(100vh-420px)] overflow-y-auto pr-2">
+                        {messages.map((msg, idx) => (
+                            <div key={idx} className={`mb-4 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                                {msg.role === "assistant" && <div className="flex-shrink-0 w-9 h-9 rounded-full bg-[#E9E3FF] flex items-center justify-center mr-3 text-xl shadow">🤖</div>}
+                                <div
+                                    className={`max-w-[75%] px-5 py-3 rounded-2xl text-base whitespace-pre-line break-words font-dmsans transition-all
                                     ${msg.role === "user" ? "bg-[#4318FF] text-white rounded-br-md" : "bg-[#F4F7FE] text-[#2B3674] rounded-bl-md border border-[#E9E3FF]"}`}
-                            >
-                                {msg.content}
+                                >
+                                    {msg.content}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                    <div ref={chatEndRef} />
-                </div>
+                        ))}
+                        <div ref={chatEndRef} />
+                    </div>
+                )}
+
                 {/* 단계별 입력 UI */}
                 {stepIdx === -1 ? (
                     <form className="mt-6 flex gap-2" onSubmit={handleChat}>

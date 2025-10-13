@@ -1,6 +1,5 @@
-import Header from "@/components/Header/Header";
-
 export default function Profile() {
+    return <div>현재 지원하지 않습니다.</div>;
     // return (
     //     <div className="h-screen py-12 pr-5 flex flex-col">
     //         <Header page="Profile" />
@@ -30,12 +29,4 @@ export default function Profile() {
     //         </section>
     //     </div>
     // );
-
-    return (
-        <div className="min-h-screen py-12 pr-5 flex flex-col">
-            <Header page="Profile" />
-
-            <section className="w-full flex-1 flex items-center justify-center text-gray-400">Profile은 추후 업데이트 예정입니다.</section>
-        </div>
-    );
 }

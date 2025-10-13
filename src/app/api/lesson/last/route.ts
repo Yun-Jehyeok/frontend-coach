@@ -16,10 +16,10 @@ export async function GET(req: NextRequest) {
         let cssIdx = Number(params.get("css"));
         let jsIdx = Number(params.get("js"));
 
-        webIdx = webIdx === -1 ? (webIdx = 0) : webIdx;
-        htmlIdx = htmlIdx === -1 ? (htmlIdx = 0) : htmlIdx;
-        cssIdx = cssIdx === -1 ? (cssIdx = 0) : cssIdx;
-        jsIdx = jsIdx === -1 ? (jsIdx = 0) : jsIdx;
+        webIdx = webIdx === -1 ? 0 : webIdx;
+        htmlIdx = htmlIdx === -1 ? 0 : htmlIdx;
+        cssIdx = cssIdx === -1 ? 0 : cssIdx;
+        jsIdx = jsIdx === -1 ? 0 : jsIdx;
 
         const lessons = result.rows as Lesson[];
 

@@ -1,8 +1,6 @@
 "use client";
 
-import SignInImg from "@/assets/imgs/SignInImg.png";
 import { signIn } from "next-auth/react";
-import Image from "next/image";
 import Link from "next/link";
 
 export default function SignIn() {
@@ -11,8 +9,8 @@ export default function SignIn() {
     };
 
     return (
-        <div className="w-screen h-screen flex items-center overflow-hidden">
-            <div className="flex-1 h-full bg-white flex flex-col justify-center items-center">
+        <div className="w-screen h-screen bg-white">
+            <div className="w-full max-w-[410px] mx-auto h-full bg-white flex flex-col justify-center items-center">
                 <div className="w-[410px] h-full relative flex flex-col justify-center">
                     <Link href="/" className="absolute top-10 left-0 flex gap-1.5 items-center text-[#A3AED0] text-sm">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -128,8 +126,6 @@ export default function SignIn() {
                     </div>
                 </div>
             </div>
-
-            <Image src={SignInImg} alt="Sign In" className="flex-1 h-full object-cover bg-white" />
         </div>
     );
 }

@@ -39,31 +39,31 @@ export async function GET() {
         const user = userResponse.rows[0] as User;
 
         // DB에서 해당 유저의 학습 진행 상황 조회
-        const webProgress = user.last_lesson_idxs.web === -1 ? 0 : user.last_lesson_idxs.web;
-        const htmlProgress = user.last_lesson_idxs.html === -1 ? 0 : user.last_lesson_idxs.html;
-        const cssProgress = user.last_lesson_idxs.css === -1 ? 0 : user.last_lesson_idxs.css;
-        const jsProgress = user.last_lesson_idxs.js === -1 ? 0 : user.last_lesson_idxs.js;
+        const webProgress = user.last_lesson_idxs.web.idx === -1 ? 0 : user.last_lesson_idxs.web.idx;
+        const htmlProgress = user.last_lesson_idxs.html.idx === -1 ? 0 : user.last_lesson_idxs.html.idx;
+        const cssProgress = user.last_lesson_idxs.css.idx === -1 ? 0 : user.last_lesson_idxs.css.idx;
+        const jsProgress = user.last_lesson_idxs.js.idx === -1 ? 0 : user.last_lesson_idxs.js.idx;
 
         const progressData: ProgressResponse[] = [
             {
                 title: "Web",
                 rate: Math.min((webProgress / webTotalLength) * 100, 100),
-                lastStudyDate: webProgress === 0 ? user.today_lessons.date : null,
+                lastStudyDate: webProgress !== 0 ? user.last_lesson_idxs.web.date : null,
             },
             {
                 title: "HTML",
                 rate: Math.min((htmlProgress / htmlTotalLength) * 100, 100),
-                lastStudyDate: htmlProgress === 0 ? user.today_lessons.date : null,
+                lastStudyDate: htmlProgress !== 0 ? user.last_lesson_idxs.html.date : null,
             },
             {
                 title: "CSS",
                 rate: Math.min((cssProgress / cssTotalLength) * 100, 100),
-                lastStudyDate: cssProgress === 0 ? user.today_lessons.date : null,
+                lastStudyDate: cssProgress !== 0 ? user.last_lesson_idxs.css.date : null,
             },
             {
                 title: "JavaScript",
                 rate: Math.min((jsProgress / jsTotalLength) * 100, 100),
-                lastStudyDate: jsProgress === 0 ? user.today_lessons.date : null,
+                lastStudyDate: jsProgress !== 0 ? user.last_lesson_idxs.js.date : null,
             },
         ];
 

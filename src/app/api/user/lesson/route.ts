@@ -23,7 +23,7 @@ export async function PUT(req: NextRequest) {
         const user = userResponse.rows[0];
 
         // 1. last_lesson_idxs 업데이트
-        const updatedLastLessonIdxs = { ...user.last_lesson_idxs, [lesson.module_key]: lesson.stepIdx };
+        const updatedLastLessonIdxs = { ...user.last_lesson_idxs, [lesson.module_key]: { idx: lesson.stepIdx, date: new Date().toISOString().split("T")[0] } };
 
         // 2. today_lessons 업데이트 (중복 제거)
         const todayLessonsArr = Array.isArray(user.today_lessons[lesson.module_key]) ? user.today_lessons[lesson.module_key] : [];

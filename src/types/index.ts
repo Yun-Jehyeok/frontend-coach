@@ -20,10 +20,22 @@ export interface User {
     nickname: string;
     tier: { lp: number; tier: string };
     last_lesson_idxs: {
-        web: number;
-        html: number;
-        css: number;
-        js: number;
+        web: {
+            idx: number;
+            date: string | null;
+        };
+        html: {
+            idx: number;
+            date: string | null;
+        };
+        css: {
+            idx: number;
+            date: string | null;
+        };
+        js: {
+            idx: number;
+            date: string | null;
+        };
     };
     today_lessons: {
         web: number[];

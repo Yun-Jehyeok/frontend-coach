@@ -32,7 +32,7 @@ export default function TodayLearning() {
                 <div className="flex flex-col gap-6 px-8 mt-6 pb-5 flex-1 overflow-y-auto">
                     {lessons.length ? (
                         lessons.map((card, idx) => (
-                            <div key={card.category} className={`rounded-2xl shadow-sm ${idx % 2 === 0 ? "bg-[#E9E3FF]" : "bg-[#F4F7FE]"} p-6 flex flex-col justify-between`}>
+                            <div key={`${card.category}${idx}`} className={`rounded-2xl shadow-sm ${idx % 2 === 0 ? "bg-[#E9E3FF]" : "bg-[#F4F7FE]"} p-6 flex flex-col justify-between`}>
                                 <div>
                                     <div className="text-[#4318FF] font-bold text-lg mb-2">{card.category}</div>
                                     <div className="font-bold text-[#2B3674] text-base mb-1">

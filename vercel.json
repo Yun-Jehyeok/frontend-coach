@@ -1,0 +1,10 @@
+{
+    "redirects": [
+        {
+            "source": "/(.*)",
+            "has": [{ "type": "host", "value": "https://frontend-coach-woad.vercel.app" }],
+            "destination": "https://fe-coach.com",
+            "permanent": true
+        }
+    ]
+}

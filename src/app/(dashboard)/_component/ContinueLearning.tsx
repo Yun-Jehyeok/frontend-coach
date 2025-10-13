@@ -74,7 +74,7 @@ export default function ContinueLearning() {
     return (
         <Card title="이어 학습하기" className="h-[500px] flex flex-col">
             <div className="flex flex-col gap-5 px-8 mt-6 pb-5 flex-1 overflow-y-auto">
-                {infos.map((card, idx) => (
+                {infos.map((card) => (
                     <div key={card.category} className={`rounded-[15px] shadow-[0_18px_40px_rgba(112,144,176,0.12)] bg-white py-[18px] px-6 flex flex-col justify-between`}>
                         <div>
                             <div className="text-[#2B3674] font-bold text-lg mb-2.5">{card.category}</div>

@@ -42,7 +42,7 @@ export default function TodayLearning() {
                         title: "JavaScript란?",
                         desc: "웹페이지에 동적인 기능을 추가하는 언어. 버튼 클릭, 데이터 처리 등 다양한 동작을 구현합니다.",
                     },
-                ].map((card, idx) => (
+                ].map((card) => (
                     <div key={card.category} className={`rounded-2xl shadow-sm ${card.color} p-6 flex flex-col justify-between`}>
                         <div>
                             <div className="text-[#4318FF] font-bold text-lg mb-2">{card.category}</div>

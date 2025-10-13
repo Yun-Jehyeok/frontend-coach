@@ -1,8 +1,8 @@
+import { authOptions } from "@/lib/api";
 import { Lesson, LessonStep, User } from "@/types";
 import { sql } from "@vercel/postgres";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
 
 export interface TodayLesson {
     category: string;

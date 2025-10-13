@@ -1,6 +1,7 @@
 import { getAllLessons as getAlllessonsApi } from "@/apis/lesson";
 import { getUser, updateUserLessons } from "@/apis/user";
 import { Lesson, LessonStep, User } from "@/types";
+import { useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState, type FormEvent } from "react";
 import Spinner from "../Spinner";
 
@@ -48,6 +49,9 @@ ${userAnswer}
 `;
 
 const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
+    const searchParam = useSearchParams();
+    const searchCategory = searchParam.get("category") || null;
+
     const [lessonModules, setLessonModules] = useState<Lesson[]>([]);
     const [user, setUser] = useState<User | null>(null);
 
@@ -83,6 +87,15 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
     const currentModule = filteredModules[moduleIdx];
     const currentStep: LessonStep | undefined = stepIdx >= 0 ? currentModule?.steps[stepIdx] : undefined;
 
+    useEffect(() => {
+        if (searchCategory !== null) {
+            let category = searchCategory;
+            if (searchCategory === "JavaScript") category = "JS";
+
+            setSelected(category as "Web" | "HTML" | "CSS" | "JS");
+        }
+    }, []);
+
     // DB에서 레슨 데이터 불러오기
     const getAllLessons = async () => {
         const res = await getAlllessonsApi();
@@ -114,7 +127,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
         if (!isLoaded || filteredModules.length === 0 || !user) return;
 
         // moduleIdx는 항상 0, stepIdx는 user.last_lesson_idxs[selected] 값 사용
-        const userStepIdx = user.last_lesson_idxs?.[selected.toLowerCase() as "web" | "html" | "css" | "js"] ?? -1;
+        const userStepIdx = user.last_lesson_idxs?.[selected.toLowerCase() as "web" | "html" | "css" | "js"].idx ?? -1;
         setModuleIdx(0);
         setStepIdx(userStepIdx);
 
@@ -199,7 +212,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
         setOpen(false);
 
         // moduleIdx는 항상 0, stepIdx는 user.last_lesson_idxs[selectedParams] 값 사용
-        const userStepIdx = user?.last_lesson_idxs?.[selectedParams.toLowerCase() as "web" | "html" | "css" | "js"] ?? -1;
+        const userStepIdx = user?.last_lesson_idxs?.[selectedParams.toLowerCase() as "web" | "html" | "css" | "js"].idx ?? -1;
         setModuleIdx(0);
         setStepIdx(userStepIdx);
 
@@ -229,7 +242,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
 
         // #file:route.ts의 로직을 그대로 사용해서 user 정보 업데이트
         // 1. last_lesson_idxs 업데이트
-        const updatedLastLessonIdxs = { ...user.last_lesson_idxs, [lesson.module_key]: lesson.stepIdx };
+        const updatedLastLessonIdxs = { ...user.last_lesson_idxs, [lesson.module_key]: { idx: lesson.stepIdx, date: new Date().toISOString().split("T")[0] } };
 
         // 2. today_lessons 업데이트 (중복 제거)
         const todayLessonsArr = Array.isArray(user.today_lessons[lesson.module_key]) ? user.today_lessons[lesson.module_key] : [];
@@ -275,7 +288,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
         };
 
         // #file:route.ts의 로직을 그대로 사용해서 user 정보 업데이트
-        const updatedLastLessonIdxs = { ...user.last_lesson_idxs, [lesson.module_key]: lesson.stepIdx };
+        const updatedLastLessonIdxs = { ...user.last_lesson_idxs, [lesson.module_key]: { idx: lesson.stepIdx, date: new Date().toISOString().split("T")[0] } };
         const todayLessonsArr = Array.isArray(user.today_lessons[lesson.module_key]) ? user.today_lessons[lesson.module_key] : [];
         let updatedTodayLessonsArr = [...todayLessonsArr];
         if (lesson.stepIdx >= 0) {

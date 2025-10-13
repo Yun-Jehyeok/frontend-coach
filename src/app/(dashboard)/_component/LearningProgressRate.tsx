@@ -19,6 +19,8 @@ export default function LearningProgressRate() {
         fetchData();
     }, []);
 
+    console.log("progressData:", progressData);
+
     return (
         <Card title="학습 진도율">
             <div className="flex-1 overflow-y-auto">

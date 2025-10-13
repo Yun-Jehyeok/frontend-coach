@@ -22,7 +22,7 @@ export default function ContinueLearning() {
         if (!user) return;
 
         const { web, html, css, js } = user.last_lesson_idxs;
-        const lessons = await getLastLessons({ idxs: [web, html, css, js] });
+        const lessons = await getLastLessons({ idxs: [web.idx, html.idx, css.idx, js.idx] });
         setInfos([
             {
                 category: "Web",
@@ -32,7 +32,7 @@ export default function ContinueLearning() {
                         : lessons.web?.type === "quiz" || lessons.web?.type === "code"
                         ? lessons.web.question
                         : "남은 웹 강의가 없습니다.",
-                idx: web,
+                idx: web.idx,
             },
             {
                 category: "HTML",
@@ -42,7 +42,7 @@ export default function ContinueLearning() {
                         : lessons.html?.type === "quiz" || lessons.html?.type === "code"
                         ? lessons.html.question
                         : "남은 HTML 강의가 없습니다.",
-                idx: html,
+                idx: html.idx,
             },
             {
                 category: "CSS",
@@ -52,7 +52,7 @@ export default function ContinueLearning() {
                         : lessons.css?.type === "quiz" || lessons.css?.type === "code"
                         ? lessons.css.question
                         : "남은 CSS 강의가 없습니다.",
-                idx: css,
+                idx: css.idx,
             },
             {
                 category: "JavaScript",
@@ -62,7 +62,7 @@ export default function ContinueLearning() {
                         : lessons.js?.type === "quiz" || lessons.js?.type === "code"
                         ? lessons.js.question
                         : "남은 JavaScript 강의가 없습니다.",
-                idx: js,
+                idx: js.idx,
             },
         ]);
     };
@@ -85,7 +85,7 @@ export default function ContinueLearning() {
                             <button
                                 className="bg-[#3965FF] text-white px-6 py-2 rounded-[10px] hover:bg-[#3965FF]/90 transition text-sm"
                                 onClick={() => {
-                                    router.push(`/basic?category=${card.category.toLowerCase()}&lessonIdx=${card.idx}`);
+                                    router.push(`/basic?category=${card.category}`);
                                 }}
                             >
                                 이어 학습하기

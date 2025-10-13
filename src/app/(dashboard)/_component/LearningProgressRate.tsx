@@ -40,7 +40,7 @@ export default function LearningProgressRate() {
                                     <div className="flex-1">{String(Math.round(Number(row.rate)))}%</div>
                                 </div>
                             </div>
-                            <div className="text-end">{row.lastStudyDate}</div>
+                            <div className="text-end">{row.lastStudyDate || "학습 전"}</div>
                         </div>
                     ))}
                 </div>

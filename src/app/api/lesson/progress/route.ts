@@ -39,31 +39,31 @@ export async function GET() {
         const user = userResponse.rows[0] as User;
 
         // DB에서 해당 유저의 학습 진행 상황 조회
-        const webProgress = user.last_lesson_idxs.web;
-        const htmlProgress = user.last_lesson_idxs.html;
-        const cssProgress = user.last_lesson_idxs.css;
-        const jsProgress = user.last_lesson_idxs.js;
+        const webProgress = user.last_lesson_idxs.web === -1 ? 0 : user.last_lesson_idxs.web;
+        const htmlProgress = user.last_lesson_idxs.html === -1 ? 0 : user.last_lesson_idxs.html;
+        const cssProgress = user.last_lesson_idxs.css === -1 ? 0 : user.last_lesson_idxs.css;
+        const jsProgress = user.last_lesson_idxs.js === -1 ? 0 : user.last_lesson_idxs.js;
 
         const progressData: ProgressResponse[] = [
             {
                 title: "Web",
                 rate: Math.min((webProgress / webTotalLength) * 100, 100),
-                lastStudyDate: user.today_lessons.date,
+                lastStudyDate: webProgress === 0 ? user.today_lessons.date : null,
             },
             {
                 title: "HTML",
                 rate: Math.min((htmlProgress / htmlTotalLength) * 100, 100),
-                lastStudyDate: user.today_lessons.date,
+                lastStudyDate: htmlProgress === 0 ? user.today_lessons.date : null,
             },
             {
                 title: "CSS",
                 rate: Math.min((cssProgress / cssTotalLength) * 100, 100),
-                lastStudyDate: user.today_lessons.date,
+                lastStudyDate: cssProgress === 0 ? user.today_lessons.date : null,
             },
             {
                 title: "JavaScript",
                 rate: Math.min((jsProgress / jsTotalLength) * 100, 100),
-                lastStudyDate: user.today_lessons.date,
+                lastStudyDate: jsProgress === 0 ? user.today_lessons.date : null,
             },
         ];
 

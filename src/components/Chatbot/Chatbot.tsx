@@ -95,18 +95,19 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
         setUser(user);
     };
     useEffect(() => {
-        getAllLessons();
-        getUserInfo();
+        const fetchData = async () => {
+            try {
+                await getAllLessons();
+                await getUserInfo();
+            } catch (err) {
+                console.error("Error fetching data:", err);
+            } finally {
+                setIsLoaded(true);
+            }
+        };
+
+        fetchData();
     }, []);
-
-    useEffect(() => {
-        if (isLoaded) return;
-
-        if (user !== null && lessonModules.length > 0) {
-            setIsLoaded(true);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [lessonModules, user]);
 
     // 진행 상태는 user state 기반으로 관리
     useEffect(() => {
@@ -151,6 +152,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
 
     // 단계별 안내
     const showStep = (idx: number) => {
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
         const step = currentModule.steps[idx];
         if (!step) return;
 
@@ -167,6 +173,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
 
     // 레슨 시작
     const startLesson = () => {
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
         setStepIdx(0);
         setMessages((prev) => [
             ...prev,
@@ -179,6 +190,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
 
     // 분류 변경
     const onChangeSelected = (selectedParams: typeof selected) => {
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
         setSelected(selectedParams);
         setOpen(false);
 
@@ -194,6 +210,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
 
     // updateUserLessons는 비동기처리 없이 user state만 직접 업데이트
     const goNextStep = () => {
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
         if (!currentModule || !user) return;
         const nextStep = stepIdx + 1;
 
@@ -230,6 +251,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
 
     // "레슨 처음부터" 버튼
     const resetProgress = () => {
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
         setModuleIdx(0);
         setStepIdx(0);
 
@@ -267,6 +293,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
 
     // 코드 실습 정답 체크
     const handleCodeCheck = async () => {
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
         if (!currentStep || currentStep.type !== "code") return;
         if (!codeInput.trim()) {
             setCodeError("코드를 입력해 주세요.");
@@ -322,6 +353,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
     const handleQuiz = async (e: FormEvent) => {
         e.preventDefault();
 
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
         if (!currentStep || currentStep.type !== "quiz") return;
 
         setMessages((prev) => [...prev, { role: "user", content: input }]);
@@ -373,6 +409,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
     // 일반 챗봇 질문
     const handleChat = async (e: FormEvent) => {
         e.preventDefault();
+
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
 
         if (!input.trim()) return;
 
@@ -439,7 +480,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
             <div className="flex-1 px-8 flex flex-col py-5">
                 {!isLoaded ? (
                     <Spinner />
-                ) : (
+                ) : user ? (
                     <div className="flex-1 max-h-[calc(100vh-420px)] overflow-y-auto pr-2">
                         {messages.map((msg, idx) => (
                             <div key={idx} className={`mb-4 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -454,6 +495,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ codeInput }) => {
                         ))}
                         <div ref={chatEndRef} />
                     </div>
+                ) : (
+                    <div className="flex-1 flex items-center justify-center text-[#A3AED0] font-medium">로그인이 필요합니다.</div>
                 )}
 
                 {/* 단계별 입력 UI */}

@@ -10,8 +10,24 @@ const poppins = Poppins({ subsets: ["latin"], weight: ["400", "700"], variable: 
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-dm-sans" });
 
 export const metadata: Metadata = {
-    title: "Frontend Coach",
-    description: "Your AI-powered frontend coding assistant",
+    title: "웹개발 쌩기초, AI와 준비해요 - AI 챗봇 교육",
+    description: "AI가 도와주는 웹개발 쌩기초 교육 서비스입니다. HTML, CSS, JavaScript 기초, AI와 함께 배워보세요!",
+    openGraph: {
+        title: "AI 챗봇 교육 - 웹개발 쌩기초, AI와 준비해요",
+        description: "AI와 함께 프론트엔드 실력을 키우는 코칭 플랫폼입니다.",
+        url: "https://fe-coach.com",
+        siteName: "Frontend Coach",
+        // images: [
+        //   {
+        //     url: "/og-image.png", // OG 이미지 경로
+        //     width: 1200,
+        //     height: 630,
+        //     alt: "Frontend Coach",
+        //   },
+        // ],
+        locale: "ko_KR",
+        type: "website",
+    },
 };
 
 export default function RootLayout({
